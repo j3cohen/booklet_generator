@@ -26,6 +26,13 @@ one step.
    - **Printer fix** — *Rotate back sides 180°* is the default and matches the
      manual workaround. If your printer flips the other way, choose *Rotate
      front sides* instead. *No rotation* gives a standard booklet.
+   - **Fit to page** — *Auto-trim whitespace* (default) scans every page for
+     the whitespace common to all of them and crops it away so the content is
+     drawn larger in each half-sheet, keeping a small padding you can adjust.
+     *Manual margins* lets you type the inches to trim from each edge (tap
+     *Use detected* to start from the scanned values). *Full page* keeps the
+     original margins. The hint under the options shows the content size and
+     how much larger the pages will be drawn.
 3. Tap **Generate booklet**. A preview of every output side appears; rotated
    sides show upside-down on purpose.
 4. **Download PDF**, or on iPad use **Share…** to save to Files or AirPrint
@@ -56,6 +63,8 @@ Pushing to `main` deploys to GitHub Pages via `.github/workflows/deploy.yml`.
 - `src/lib/buildBooklet.ts` — composes the output PDF with pdf-lib and applies
   the rotation by setting each page's `/Rotate`, exactly as rotating in
   Preview or the Files app does.
+- `src/lib/contentBounds.ts` — rasterises each source page at low resolution
+  with pdf.js and finds the whitespace shared by every page.
 - `src/lib/preview.ts` — renders thumbnails with pdf.js.
 - `src/App.tsx` — the single-screen UI.
 
@@ -67,3 +76,9 @@ Pushing to `main` deploys to GitHub Pages via `.github/workflows/deploy.yml`.
   implemented.
 - Source pages that carry their own `/Rotate` (landscape scans, etc.) are
   drawn as they appear in a viewer.
+- Trimming is one uniform crop for the whole document (the union of every
+  page's content box), so type size stays consistent across pages. Detection
+  is pixel-based: a full-bleed cover or a scan with dark edges will stop
+  auto-trim from finding much, in which case use manual margins. Cropping is
+  done by embedding each page with a tighter bounding box; nothing is
+  re-rendered.

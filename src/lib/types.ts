@@ -21,6 +21,8 @@ export interface BookletOptions {
   /** Sheets per signature. 0 (or undefined) means one single nested booklet. */
   sheetsPerSignature?: number
   rotation: RotationMode
+  /** Whitespace to trim from every source page before fitting. Undefined = no trimming. */
+  crop?: Insets
 }
 
 /** One output page of the generated PDF, in order. */
@@ -30,4 +32,12 @@ export interface OutputSide {
   side: 'front' | 'back'
   slots: [Slot, Slot]
   rotated: boolean
+}
+
+/** Trim margins in inches, measured from each edge of the page as it appears in a viewer. */
+export interface Insets {
+  top: number
+  right: number
+  bottom: number
+  left: number
 }

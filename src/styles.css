@@ -41,7 +41,10 @@ h2 { font-size: 1.1rem; margin: 24px 0 8px; }
 .dropzone.dragging, .dropzone:focus-visible { border-color: var(--accent); outline: none; }
 
 .options { display: grid; gap: 12px; grid-template-columns: 1fr; margin-bottom: 16px; }
-@media (min-width: 640px) { .options { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 640px) { .options { grid-template-columns: 1fr 1fr; } .options .fit { grid-column: 1 / -1; } }
+.insets { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 2px 0 4px 26px; }
+fieldset label.inset { padding: 0; gap: 6px; text-transform: capitalize; }
+button.small { padding: 5px 10px; font-size: 0.85em; font-weight: 500; }
 fieldset { border: 1px solid var(--border); border-radius: 12px; background: var(--card); padding: 12px 14px; margin: 0; }
 legend { font-weight: 600; padding: 0 6px; }
 fieldset label { display: flex; align-items: center; gap: 8px; padding: 6px 0; flex-wrap: wrap; }

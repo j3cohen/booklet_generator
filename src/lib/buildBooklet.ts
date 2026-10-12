@@ -1,6 +1,6 @@
-import { PDFDocument, degrees, type PDFEmbeddedPage, type PDFPage } from 'pdf-lib'
+import { PDFDocument, degrees, type PageBoundingBox, type PDFEmbeddedPage, type PDFPage } from 'pdf-lib'
 import { impose, toOutputSides } from './imposition'
-import type { BookletOptions, OutputSide, Signature } from './types'
+import type { BookletOptions, Insets, OutputSide, Signature } from './types'
 
 /** US Letter landscape, in PDF points. */
 export const SHEET_WIDTH = 792
@@ -21,17 +21,59 @@ interface Embedded {
 }
 
 /** Pages with no content stream (true blanks) cannot be embedded; we leave their slot empty. */
-async function embedAll(out: PDFDocument, pages: PDFPage[]): Promise<(Embedded | null)[]> {
+async function embedAll(out: PDFDocument, pages: PDFPage[], crop?: Insets): Promise<(Embedded | null)[]> {
   const result: (Embedded | null)[] = []
   for (const srcPage of pages) {
     if (!srcPage.node.Contents()) {
       result.push(null)
       continue
     }
-    const [page] = await out.embedPages([srcPage])
-    result.push({ page, rotate: normalizeRotation(srcPage.getRotation().angle) })
+    const rotate = normalizeRotation(srcPage.getRotation().angle)
+    const bbox = crop ? insetsToBoundingBox(srcPage, crop, rotate) : undefined
+    const [page] = await out.embedPages([srcPage], [bbox])
+    result.push({ page, rotate })
   }
   return result
+}
+
+const POINTS_PER_INCH = 72
+
+/**
+ * Convert trim insets given in the page's visual orientation into a bounding box in
+ * the page's own (unrotated) user space. pdf-lib shifts the box to the origin when
+ * embedding, so the embedded page's width/height become the cropped size.
+ *
+ * With /Rotate N the page is displayed turned N° clockwise, so e.g. at 90° the
+ * user-space left edge is what the viewer shows at the top.
+ */
+export function insetsToBoundingBox(srcPage: PDFPage, insets: Insets, rotate: number): PageBoundingBox {
+  const { x, y, width, height } = srcPage.getCropBox()
+  const { top: vt, right: vr, bottom: vb, left: vl } = insets
+  // Insets from the user-space top, right, bottom, left edges.
+  let t = vt, r = vr, b = vb, l = vl
+  switch (rotate) {
+    case 90:
+      // visual top = user left, visual right = user top, visual bottom = user right, visual left = user bottom
+      l = vt; t = vr; r = vb; b = vl
+      break
+    case 180:
+      t = vb; r = vl; b = vt; l = vr
+      break
+    case 270:
+      // visual top = user right, visual right = user bottom, visual bottom = user left, visual left = user top
+      r = vt; b = vr; l = vb; t = vl
+      break
+  }
+  const box: PageBoundingBox = {
+    left: x + l * POINTS_PER_INCH,
+    right: x + width - r * POINTS_PER_INCH,
+    bottom: y + b * POINTS_PER_INCH,
+    top: y + height - t * POINTS_PER_INCH,
+  }
+  if (box.right <= box.left || box.top <= box.bottom) {
+    return { left: x, bottom: y, right: x + width, top: y + height }
+  }
+  return box
 }
 
 /**
@@ -50,7 +92,7 @@ export async function buildBooklet(input: Uint8Array | ArrayBuffer, options: Boo
   out.setTitle(`${src.getTitle() ?? 'Document'} (booklet)`)
   out.setProducer('booklet_generator')
 
-  const embedded = await embedAll(out, src.getPages())
+  const embedded = await embedAll(out, src.getPages(), options.crop)
 
   for (const side of sides) {
     const sheet = out.addPage([SHEET_WIDTH, SHEET_HEIGHT])
