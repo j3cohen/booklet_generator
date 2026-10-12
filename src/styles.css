@@ -69,6 +69,3 @@ figure { margin: 0; background: var(--card); border: 1px solid var(--border); bo
 figure img { width: 100%; height: auto; display: block; border: 1px solid var(--border); background: #fff; }
 figcaption { font-size: 0.85em; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .badge { font-size: 0.75em; background: var(--accent); color: var(--accent-fg); padding: 1px 6px; border-radius: 999px; margin-left: 4px; }
-
-footer { margin-top: 32px; font-size: 0.85em; color: var(--muted); }
-footer a { color: inherit; }

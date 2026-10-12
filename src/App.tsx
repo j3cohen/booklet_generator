@@ -417,10 +417,6 @@ export default function App() {
           )}
         </section>
       )}
-
-      <footer>
-        <a href="https://github.com/j3cohen/booklet_generator">Source on GitHub</a>
-      </footer>
     </main>
   )
 }
